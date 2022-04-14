@@ -1,0 +1,40 @@
+node{
+    stage("pull source code from GITHUB"){
+        git 'https://github.com/apache/maven-site.git'
+    }
+    
+    stage("Build Docker file"){
+        sh 'docker image build -t $JOB_NAME:v1.$BUILD_ID.'
+        sh 'docker image tag $JOB_NAME:v1.$BUILD_ID  sd171991/$JOB_NAME:v1.$BUILD_ID'
+        sh 'docker image tag $JOB_NAME:v1.$BUILD_ID  sd171991/$JOB_NAME:latest'
+    }
+    
+    stage("push image to docker hub"){
+        withCredentials([string(credentialsId: 'dockerhubpassword', variable: 'dockerhubpassword')]) {
+    // some block
+     sh 'docker login -u sd171991 -p ${dockerhubpassword}'
+     sh 'docker image push  sd171991/$JOB_NAME:v1.$BUILD_ID'
+     sh 'docker image push  sd171991/$JOB_NAME:latest'
+     sh 'docker rmi $JOB_NAME:v1.$BUILD_ID  sd171991/$JOB_NAME:v1.$BUILD_ID sd171991/$JOB_NAME:latest' 
+}
+       
+    }
+    
+    
+    stage("Deployment Of Docker Container"){
+        def dockerrun = 'docker run -p 8000:80 -d --name cloudknowledges  sd171991/scripted-pipeline-demo:latest'
+        def dockerrun = 'docker container rm -f cloudknowledges'
+        def dockerrun = 'dockerimagerm=  docker image rmi  sd171991/scripted-pipeline-demo:latest'' 
+        sshagent(['dockerhostpassword']) {
+    // some block
+    sh "ssh -o StrictHostKeyChecking=no ec2-user@192.168.1.106 $(dockerrm)"
+    sh "ssh -o StrictHostKeyChecking=no ec2-user@192.168.1.106 $(dockerimagerm)"
+    sh "ssh -o StrictHostKeyChecking=no ec2-user@192.168.1.106 $(dockerrun)"
+   
+}
+        
+    }
+    
+    
+    
+}

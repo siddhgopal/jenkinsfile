@@ -1,0 +1,11 @@
+FROM centos:latest
+MAINTAINER sidhgopalsoni@gmail.com
+RUN yum install -y httpd \
+  zip \ unzip
+ADD https://www.free-css.com/assets/files/free-css-templates/download/page277/pigga.zip
+WORKDIR /var/www/html
+RUN unzip pigga.zip
+RUN cp -rvf pigga.zip/*
+RUN rm -rf  pigga.zip
+CMD ["/usr/sbin/httpd","D","FOREGROUND"]
+EXPOSE 80
